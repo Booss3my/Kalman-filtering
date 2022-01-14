@@ -5,9 +5,9 @@ clear;
 
 fig_MRU=0; %Vitesse MRU 
 sigma_acc=0.0001;
-sigma_mesure=10;
+var_mesure=10;
 err_quad_moy=0;
-n_real=1;
+n_real=100;
 vit_init=[1,2];
 etat_init=zeros(2);
 etat_init(2,:)=vit_init;
@@ -22,52 +22,74 @@ for i=1:n_real
     Trans_mat=[1,T;0,1];
     Cov=sigma_acc*[T^4/4,T^3/2;T^3/2,T^2];
 
-    x_bruite=traj_MRU(1,:)+sigma_mesure*randn(1,500);
-    y_bruite=traj_MRU(2,:)+sigma_mesure*randn(1,500);
+    x_bruite=traj_MRU(1,:)+sqrt(var_mesure)*randn(1,500);
+    y_bruite=traj_MRU(2,:)+sqrt(var_mesure)*randn(1,500);
 
-    est_x=kalman(Trans_mat,eye(2),[1,0],Cov,6,x_bruite,zeros(2,1),zeros(2),500,0);
-    est_y=kalman(Trans_mat,eye(2),[1,0],Cov,6,y_bruite,zeros(2,1),zeros(2),500,0);
+    est_x=kalman(Trans_mat,eye(2),[1,0],Cov,10,x_bruite,zeros(2,1),zeros(2),499,1);
+    est_y=kalman(Trans_mat,eye(2),[1,0],Cov,10,y_bruite,zeros(2,1),zeros(2),499,1);
     
     if i==1
-        figure;
-        plot_traj(traj_theo_MRU(1,:),traj_theo_MRU(2,:),x_bruite,y_bruite,est_x(2:end,1),est_y(2:end,1))
+        %figure;
+        %plot_traj(traj_theo_MRU(1,:),traj_theo_MRU(2,:),x_bruite,y_bruite,est_x(2:end,1),est_y(2:end,1))
     end
-    err_quad_moy=err_quad_moy+sum(abs(est_x(2:end,1).'-traj_MRU(1,2:end)))/500;
+    
+    %pour faciliter l'ecriture
+    x_est=est_x(:,1).';
+    y_est=est_y(:,1).';
+    x_theo=traj_MRU(1,2:end);
+    y_theo=traj_MRU(2,2:end);
+    
+    err_quad_moy=err_quad_moy+((x_theo-x_est).^2+(y_theo-y_est).^2)./(x_theo.^2+y_theo.^2);
 end
 err_quad_moy=err_quad_moy/n_real;
 
+semilogy(err_quad_moy)
+hold on
 
 %% Robustesse aux variations de parametres // MUA
 
 T=1;
-sigma_jerk=1e-10;
-sigma_mesure=100;
+sigma_jerk=100;
+var_mesure=10;
 Trans_mat=[1,T,T^2/2;0,1,T;0,0,1];
 Cov=sigma_jerk*[T^3/6,T^2/2,T]*[T^3/6;T^2/2;T];
 err_quad_moy=0;
+t=700;
+flag_lissage=1;
 
-Acc_init=[0.1,0.1];
+Acc_init=[1,1];
 etat_init=zeros(3,2);
 etat_init(3,:)=Acc_init;
-n_real=1;
+n_real=100;
+err_quad_moy=0;
+%err_moy_y=0;
 for i=1:n_real
     i
-    traj_theo_MUA=MUA_traj(etat_init,0,500);
-    traj_MUA=MUA_traj(etat_init,sigma_jerk,500);
+    traj_theo_MUA=MUA_traj(etat_init,0,t);
+    traj_MUA=MUA_traj(etat_init,sigma_jerk,t);
 
 
-    x_bruite=traj_MUA(1,:)+sigma_mesure*randn(1,500);
-    y_bruite=traj_MUA(2,:)+sigma_mesure*randn(1,500);
+    x_bruite=traj_MUA(1,:)+sqrt(var_mesure)*randn(1,t);
+    y_bruite=traj_MUA(2,:)+sqrt(var_mesure)*randn(1,t);
 
-    est_x=kalman(Trans_mat,eye(3),[1,0,0],Cov,100,x_bruite,zeros(3,1),zeros(3),500,0);
-    est_y=kalman(Trans_mat,eye(3),[1,0,0],Cov,100,y_bruite,zeros(3,1),zeros(3),500,0);
+    est_x=kalman(Trans_mat,eye(3),[1,0,0],Cov,1,x_bruite,[x_bruite(1);0;0],zeros(3),t-1,flag_lissage);
+    est_y=kalman(Trans_mat,eye(3),[1,0,0],Cov,1,y_bruite,[y_bruite(1);0;0],zeros(3),t-1,flag_lissage);
+
     
-    if i==1
-        plot_traj(traj_theo_MUA(1,:),traj_theo_MUA(2,:),x_bruite,y_bruite,est_x(2:end,1),est_y(2:end,1))
-    end
-    err_quad_moy=err_quad_moy+sum(abs(est_x(2:end,1).'-traj_MUA(1,2:end)))/500;
+    %pour faciliter l'ecriture
+    x_est=est_x(:,1).';
+    y_est=est_y(:,1).';
+    x_theo=traj_MUA(1,2:end);
+    y_theo=traj_MUA(2,2:end);
+    err_quad_moy=err_quad_moy+((x_theo-x_est).^2+(y_theo-y_est).^2)./(x_theo.^2+y_theo.^2);
+    
 end
+
 err_quad_moy=err_quad_moy/n_real;
+%err_moy_y=err_moy_y/n_real;;
+%err_tot_moy=(err_moy_x+err_moy_y)/2;
 
 
+semilogy(err_quad_moy)
+hold on
 

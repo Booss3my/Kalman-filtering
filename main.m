@@ -12,9 +12,11 @@ fig_MUA=0; %Acceleration MUA
 sigma_jerk=100;
 %% verification génération du bruit
 R=zeros(size(Cov));
+
 for i=1:1000
     w=Bruit_gen(Cov,1);
     R=R+w*w.';
+    tmp=tmp+w;
 end
 cov_est=R/1000; %doit converger vers la matrice de cov
 
