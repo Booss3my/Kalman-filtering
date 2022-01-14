@@ -36,6 +36,5 @@ if lissage==1
     end
 
 end
-save("save.mat","P_Kk_save")
 
 end

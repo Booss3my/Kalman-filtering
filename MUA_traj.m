@@ -3,7 +3,7 @@ function [out] =MUA_traj(etat_init,sigma_jerk,num_steps)
 
 T=1;
 Trans_mat=[1,T,T^2/2;0,1,T;0,0,1];
-Cov=sigma_jerk*[T^3/6,T^2/2,T]*[T^3/6;T^2/2;T];
+Cov=sigma_jerk*[T^3/6;T^2/2;T]*[T^3/6,T^2/2,T];
 X_MUA=zeros([3,num_steps]); 
 Y_MUA=zeros([3,num_steps]); 
 X_MUA(:,1)=etat_init(:,1);%état initial

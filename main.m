@@ -1,6 +1,6 @@
 clear
 close all
-Cov=[1,0.5;0.5,1]; %choisie definie positive
+
 Moy=[0;0];
 T=1;
 N=20;
@@ -8,17 +8,19 @@ N=20;
 fig_MRU=0; %Vitesse MRU 
 sigma_acc=10;
 
-fig_MUA=0; %Acceleration MUA 
-sigma_jerk=100;
+fig_MUA=01; %Acceleration MUA 
+sigma_jerk=10;
 %% verification génération du bruit
+Cov=sigma_jerk*[T^3/6;T^2/2;T]*[T^3/6,T^2/2,T];
 R=zeros(size(Cov));
 
-for i=1:1000
+
+for i=1:10000
     w=Bruit_gen(Cov,1);
     R=R+w*w.';
-    tmp=tmp+w;
+    
 end
-cov_est=R/1000; %doit converger vers la matrice de cov
+cov_est=R/10000; %doit converger vers la matrice de cov
 
 %% MRU
 
@@ -41,7 +43,7 @@ end
 %% MUA
 
 Trans_mat=[1,T,T^2/2;0,1,T;0,0,1];
-Cov=sigma_jerk*[T^3/6,T^2/2,T]*[T^3/6;T^2/2;T];
+Cov=sigma_jerk*[T^3/6;T^2/2;T]*[T^3/6,T^2/2,T];
 acceleration_in=10;
  
 %état initial
